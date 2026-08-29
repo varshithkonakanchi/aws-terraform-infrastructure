@@ -1,0 +1,11 @@
+aws_region   = "us-east-2"
+aws_profile  = "your-aws-profile"
+project_name = "devops-assignment"
+environment  = "dev"
+
+instance_type     = "t3.micro"
+db_instance_class = "db.t3.micro"
+
+db_name     = "appdb"
+db_username = "dbadmin"
+db_password = "YOUR_SECURE_PASSWORD"
