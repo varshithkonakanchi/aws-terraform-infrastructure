@@ -25,3 +25,13 @@ terraform.rc
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Python
+venv/
+app/venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables
+.env
