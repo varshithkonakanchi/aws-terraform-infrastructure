@@ -33,13 +33,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
       - name: Deploy to staging EC2
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
+            set -e
+
             docker pull cybercreeper/8byte-devops-app:${{ github.sha }}
 
             docker stop 8byte-staging-app || true
@@ -53,4 +60,6 @@ jobs:
 
             sleep 5
 
-            curl --fail http://localhost:5000/health
+            curl --fail --retry 5 --retry-delay 2 \
+              http://localhost:5000/health
+          EOF
