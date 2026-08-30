@@ -28,6 +28,16 @@ jobs:
             cybercreeper/8byte-devops-app:latest
             cybercreeper/8byte-devops-app:${{ github.sha }}
 
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: cybercreeper/8byte-devops-app:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
   deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
