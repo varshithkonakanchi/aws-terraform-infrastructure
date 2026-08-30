@@ -63,3 +63,40 @@ jobs:
             curl --fail --retry 5 --retry-delay 2 \
               http://localhost:5000/health
           EOF
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to production
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
+            set -e
+
+            docker pull cybercreeper/8byte-devops-app:${{ github.sha }}
+
+            docker stop 8byte-production-app || true
+            docker rm 8byte-production-app || true
+
+            docker run -d \
+              --name 8byte-production-app \
+              --restart unless-stopped \
+              -p 5001:5000 \
+              cybercreeper/8byte-devops-app:${{ github.sha }}
+
+            sleep 5
+
+            curl --fail --retry 5 --retry-delay 2 \
+              http://localhost:5001/health
+          EOF
