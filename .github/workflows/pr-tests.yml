@@ -33,3 +33,14 @@ jobs:
       - name: Run unit and integration tests
         working-directory: ./app
         run: pytest -v
+
+      - name: Notify Slack on failure
+        if: failure()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST \
+            -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ PR Tests failed for $GITHUB_REPOSITORY. Branch: $GITHUB_HEAD_REF. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}" \
+            "$SLACK_WEBHOOK_URL"
